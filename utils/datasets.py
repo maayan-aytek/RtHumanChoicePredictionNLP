@@ -4,20 +4,17 @@ import torch
 from torch.utils.data import Dataset, IterableDataset
 import numpy as np
 from consts import *
-from transformers import BertTokenizer
 import os
 from collections import defaultdict
-from utils.functions import learn_sigmoid_weighting_by_reaction_time, get_model_name, move_to
 import Simulation.strategies_code as bot_strategies
 import Simulation.dm_strategies as user_strategies
 import random
 import utils.basic_nature_options
-from sklearn.linear_model import LogisticRegression
-import pickle
 from tqdm import trange
 import pandas as pd
 from consts import *
 from utils import personas
+from utils.generate_reaction_time import generate_reaction_time
 
 
 class OfflineDataSet(Dataset):
@@ -341,6 +338,8 @@ class OnlineSimulationDataSet(Dataset):
                                   favorite_topic_method="review", **args)
         bots = self.sample_bots()
         game_id = 0
+        total_rounds_so_far = 0
+        total_games_mistakes = 0
         for bot in bots:
             user.return_to_init_proba()
             bot_strategy = getattr(bot_strategies, f"strategy_{bot}")
@@ -358,6 +357,8 @@ class OnlineSimulationDataSet(Dataset):
                 reaction_time = -1
                 last_reaction_time = -1
                 weight = 1
+
+                current_game_mistakes = 0
                 for round_number in range(1, DATA_ROUNDS_PER_GAME + 1):  # start a new round
                     hotel_id, hotel = self.get_hotel()  # get a hotel
 
@@ -399,7 +400,20 @@ class OnlineSimulationDataSet(Dataset):
                            "last_last_didWin_False": last_last_didWin_False,
                            "last_last_didWin_True": last_last_didWin_True,
                            "user_points": user_points, "bot_points": bot_points, "weight": weight, "is_sample": True}
+                    
+                    copy_row = {"user_id": user_id, "gameId": game_id, "roundNum": round_number,
+                                "reviewId": review_id, "last_reaction_time": last_reaction_time,
+                                "last_didWin_True": last_didWin_True, "last_didGo_True": last_didGo_True,
+                                "user_points": user_points, "bot_points": bot_points}
+                    # copy_row = row.copy()
+                    copy_row['total_rounds_so_far'] = total_rounds_so_far
+                    copy_row['rounds_so_far'] = round_number - 1
+                    copy_row['current_game_mistakes_amount'] = current_game_mistakes
+                    copy_row['total_games_mistakes_amount'] = total_games_mistakes
+                    reaction_time = generate_reaction_time(copy_row)
 
+                    row['reaction_time'] = reaction_time
+                    last_reaction_time = reaction_time
                     # if self.advanced_reaction_time:
                     #     last_reaction_time = self.get_reaction_time(row)
 
@@ -409,6 +423,12 @@ class OnlineSimulationDataSet(Dataset):
                     last_last_didGo, last_last_didWin = last_didGo, last_didWin
                     last_didGo, last_didWin = int(user_action), int(round_result)
                     game.append(row)
+
+                    # Game Progress
+                    total_rounds_so_far += 1
+                    current_game_mistakes += int(round_result == 0)
+                    total_games_mistakes += int(round_result == 0)
+
                 self.add_game(user_id, game)
                 game_id += 1
         self.next_user += 1

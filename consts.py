@@ -1,6 +1,9 @@
 import torch
 import pandas as pd
 import numpy as np
+import pickle
+import json
+import os
 
 DATA_GAME_REVIEWS_PATH = "data/game_reviews"
 
@@ -88,3 +91,26 @@ bot_thresholds_X = {0: 10, 1: 7, 2: 9, 3: 8, 4: 8, 5: 9}
 bot_thresholds_Y = {0: 10, 1: 9, 2: 9, 3: 9, 4: 9, 5: 9}
 
 AGENT_LEARNING_TH = 8
+
+
+with open('models/rf_basic_classification_model.pkl', 'rb') as file:
+    RT_MODEL = pickle.load(file)
+    
+RT_MODEL_FEATURES = RT_MODEL.feature_names_in_
+
+with open("data/baseline_proba2go.txt", 'r') as file:
+    PROBA2GO_DICT = json.load(file)
+
+REVIEWS_DICT = dict()
+for hotel_id in range(1, 1069):
+    hotel_df = pd.read_csv(os.path.join(DATA_GAME_REVIEWS_PATH, f'{hotel_id}.csv'), names=['reviewId', 'hotelId', 'positive', 'negative', 'score'])
+    reviews = hotel_df['reviewId'].unique()
+    for review_id in reviews:
+        review_row = hotel_df.loc[hotel_df['reviewId'] == review_id]
+        positive_review = review_row['positive'].fillna('').iloc[0]
+        negative_review = review_row['negative'].fillna('').iloc[0]
+        positive_len = len(positive_review)
+        negative_len = len(negative_review)
+        total_len = len(positive_review) + len(negative_review)
+        REVIEWS_DICT[review_id] = {'positive_len': positive_len, 'negative_len': negative_len, 
+                                   'total_len': total_len, 'positive_proportion': positive_len / total_len if total_len != 0 else 0}
