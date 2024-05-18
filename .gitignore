@@ -1,0 +1,7 @@
+# Ignore specific directories
+wandb/
+__pycache__/
+predictions/
+
+# Ignore all CSV files
+*.csv
