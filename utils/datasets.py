@@ -266,6 +266,7 @@ class OnlineSimulationDataSet(Dataset):
     def play_round(self, bot_message, user, previous_rounds, hotel, review_id):
         user_strategy = self.sample_from_probability_vector(user.user_proba)
         user_strategy_function = user.ACTIONS[user_strategy][2]
+        user_strategy_name = user.ACTIONS[user_strategy][0]
         review_features = self.gcf[review_id]
         information = {"bot_message": bot_message,
                        "previous_rounds": previous_rounds,
@@ -273,7 +274,7 @@ class OnlineSimulationDataSet(Dataset):
                        "review_features": review_features,
                        "review_id": review_id}
         user_action = user_strategy_function(information)
-        return user_action
+        return user_action, user_strategy_name
 
     @staticmethod
     def sample_from_probability_vector(probabilities):
@@ -366,7 +367,7 @@ class OnlineSimulationDataSet(Dataset):
                     review_id = self.get_review_id(hotel_id, np.argmax(hotel == bot_message))
 
                     signal_error = np.random.normal(0, self.SIMULATION_SIGNAL_EPSILON)
-                    user_action = self.play_round(bot_message + signal_error, user, previous_rounds,
+                    user_action, user_strategy_name = self.play_round(bot_message + signal_error, user, previous_rounds,
                                                   hotel, review_id)  # DM plays
                     round_result = self.check_choice(hotel, user_action)  # round results
                     correct_answers += round_result
@@ -401,10 +402,10 @@ class OnlineSimulationDataSet(Dataset):
                            "last_last_didWin_True": last_last_didWin_True,
                            "user_points": user_points, "bot_points": bot_points, "weight": weight, "is_sample": True}
                     
-                    copy_row = {"user_id": user_id, "gameId": game_id, "roundNum": round_number,
+                    copy_row = {"user_id": user_id, "gameId": game_id, "roundNum": round_number, "strategy_id": bot,
                                 "reviewId": review_id, "last_reaction_time": last_reaction_time,
                                 "last_didWin_True": last_didWin_True, "last_didGo_True": last_didGo_True,
-                                "user_points": user_points, "bot_points": bot_points}
+                                "user_points": user_points, "bot_points": bot_points, "user_strategy_name": user_strategy_name}
                     # copy_row = row.copy()
                     copy_row['total_rounds_so_far'] = total_rounds_so_far
                     copy_row['rounds_so_far'] = round_number - 1

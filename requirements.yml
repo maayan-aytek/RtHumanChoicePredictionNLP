@@ -12,3 +12,7 @@ dependencies:
     - transformers
     - scipy
     - scikit-learn
+    - seaborn==0.13.2
+    - shap==0.44.1
+    - lime==0.2.0.1
+    - graphviz==0.20.3
