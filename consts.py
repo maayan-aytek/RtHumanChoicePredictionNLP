@@ -93,7 +93,7 @@ bot_thresholds_Y = {0: 10, 1: 9, 2: 9, 3: 9, 4: 9, 5: 9}
 AGENT_LEARNING_TH = 8
 
 
-with open('models/rf_basic_classification_model.pkl', 'rb') as file:
+with open('models/updated_large_model_with_strategies_7.pkl', 'rb') as file:
     RT_MODEL = pickle.load(file)
     
 RT_MODEL_FEATURES = RT_MODEL.feature_names_in_
@@ -113,4 +113,7 @@ for hotel_id in range(1, 1069):
         negative_len = len(negative_review)
         total_len = len(positive_review) + len(negative_review)
         REVIEWS_DICT[review_id] = {'positive_len': positive_len, 'negative_len': negative_len, 
-                                   'total_len': total_len, 'positive_proportion': positive_len / total_len if total_len != 0 else 0}
+                                   'total_len': total_len, 'positive_proportion': positive_len / total_len if total_len != 0 else 0, 
+                                   'negative_proportion': negative_len / total_len if total_len != 0 else 0, 
+                                   'positive_negative_proportion': positive_len / negative_len if negative_len != 0 else 0, 
+                                   'negative_positive_proportion': negative_len / positive_len if positive_len != 0 else 0}
