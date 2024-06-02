@@ -64,6 +64,11 @@ parser.add_argument('--OFFLINE_SIM_DATA_PATH', type=str, default="data/LLM_games
 parser.add_argument('--personas_balanced', type=str2bool, default=True, help='Personas balanced flag')
 parser.add_argument('--personas_group_number', type=int, default=-1, help='Personas group number')
 
+# Reaction time 
+parser.add_argument('--rt_method', type=str, default="model", help='Reaction time method')
+parser.add_argument('--rt_model_file_name', type=str, default="updated_large_model_with_strategies_7.pkl", help='Reaction time trained model file name')
+parser.add_argument('--rt_sampling_distribution', type=str, default='normal', help='Reaction time random sampling distribution')
+
 
 args = parser.parse_args()
 

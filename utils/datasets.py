@@ -14,7 +14,7 @@ from tqdm import trange
 import pandas as pd
 from consts import *
 from utils import personas
-from utils.generate_reaction_time import generate_reaction_time
+from utils.generate_reaction_time import ReactionTimeGenerator
 
 
 class OfflineDataSet(Dataset):
@@ -171,6 +171,13 @@ class OnlineSimulationDataSet(Dataset):
         zero_knowledge = config["zero_knowledge"]
         weight_type = self.config["loss_weight_type"]
         self.bots_per_user = config["bots_per_user"]
+        # reaction time generator
+        rt_method = config['rt_method']
+        rt_model_file_name = config['rt_model_file_name']
+        rt_sampling_distribution = config['rt_sampling_distribution']
+        self.rt_generator = ReactionTimeGenerator(method=rt_method,
+                                                  rt_model_file_name=rt_model_file_name,
+                                                  rt_sampling_distribution=rt_sampling_distribution)
 
         self.n_users = int(n_users / self.bots_per_user * 6)
         max_active = int(max_active / self.bots_per_user * 6)
@@ -411,7 +418,7 @@ class OnlineSimulationDataSet(Dataset):
                     copy_row['rounds_so_far'] = round_number - 1
                     copy_row['current_game_mistakes_amount'] = current_game_mistakes
                     copy_row['total_games_mistakes_amount'] = total_games_mistakes
-                    reaction_time = generate_reaction_time(copy_row)
+                    reaction_time = self.rt_generator.generate_rt(copy_row)
 
                     row['reaction_time'] = reaction_time
                     last_reaction_time = reaction_time

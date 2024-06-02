@@ -93,10 +93,10 @@ bot_thresholds_Y = {0: 10, 1: 9, 2: 9, 3: 9, 4: 9, 5: 9}
 AGENT_LEARNING_TH = 8
 
 
-with open('models/updated_large_model_with_strategies_7.pkl', 'rb') as file:
-    RT_MODEL = pickle.load(file)
+# with open('models/updated_large_model_with_strategies_7.pkl', 'rb') as file:
+#     RT_MODEL = pickle.load(file)
     
-RT_MODEL_FEATURES = RT_MODEL.feature_names_in_
+# RT_MODEL_FEATURES = RT_MODEL.feature_names_in_
 
 with open("data/baseline_proba2go.txt", 'r') as file:
     PROBA2GO_DICT = json.load(file)

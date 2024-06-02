@@ -1,6 +1,6 @@
 import wandb
-YOUR_WANDB_USERNAME = "eilamshapira"
-project = "NLP2024_PROJECT_YOUR_UID"
+YOUR_WANDB_USERNAME = "maayan-aytek1"
+project = "206713612"
 
 command = [
         "${ENVIRONMENT_VARIABLE}",
@@ -18,11 +18,18 @@ sweep_config = {
         "name": "AUC.test.max"
     },
     "parameters": {
-        "ENV_HPT_mode": {"values": [False]},
-        "architecture": {"values": ["LSTM"]},
-        "seed": {"values": list(range(1, 6))},
-        "online_simulation_factor": {"values": [0, 4]},
-        "features": {"values": ["EFs", "GPT4", "BERT"]},
+        # "ENV_HPT_mode": {"values": [False]},
+        # "architecture": {"values": ["LSTM"]},
+        "seed": {"values": list(range(1, 4))},
+        "rt_method": {"values": ['model']},
+        "rt_model_file_name": {"values": ["updated_large_model_with_strategies_7.pkl", "rf_basic_classification_model_1.pkl"]}
+        # "rt_method": {"values": ['baseline']}
+        # "rt_method": {"values": ['random']},
+        # "rt_sampling_distribution": {"values": ["normal", "uniform"]}
+
+
+        # "online_simulation_factor": {"values": [0, 4]},
+        # "features": {"values": ["EFs", "GPT4", "BERT"]},
     },
     "command": command
 }
