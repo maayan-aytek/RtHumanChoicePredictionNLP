@@ -3,7 +3,9 @@ import pandas as pd
 import numpy as np
 import pickle
 import json
+import nltk
 import os
+from nltk.sentiment import SentimentIntensityAnalyzer
 
 DATA_GAME_REVIEWS_PATH = "data/game_reviews"
 
@@ -101,19 +103,31 @@ AGENT_LEARNING_TH = 8
 with open("data/baseline_proba2go.txt", 'r') as file:
     PROBA2GO_DICT = json.load(file)
 
+nltk.download('punkt')
+nltk.download('averaged_perceptron_tagger')
+nltk.download('vader_lexicon')
+sia = SentimentIntensityAnalyzer()
 REVIEWS_DICT = dict()
-for hotel_id in range(1, 1069):
+
+for hotel_id in range(1, N_HOTELS + 1):
     hotel_df = pd.read_csv(os.path.join(DATA_GAME_REVIEWS_PATH, f'{hotel_id}.csv'), names=['reviewId', 'hotelId', 'positive', 'negative', 'score'])
     reviews = hotel_df['reviewId'].unique()
     for review_id in reviews:
         review_row = hotel_df.loc[hotel_df['reviewId'] == review_id]
+        review_score = review_row['score'].iloc[0]
         positive_review = review_row['positive'].fillna('').iloc[0]
         negative_review = review_row['negative'].fillna('').iloc[0]
+        review = positive_review + ' ' + negative_review
+        review_sentiment_scores = sia.polarity_scores(review)
         positive_len = len(positive_review)
         negative_len = len(negative_review)
         total_len = len(positive_review) + len(negative_review)
         REVIEWS_DICT[review_id] = {'positive_len': positive_len, 'negative_len': negative_len, 
-                                   'total_len': total_len, 'positive_proportion': positive_len / total_len if total_len != 0 else 0, 
-                                   'negative_proportion': negative_len / total_len if total_len != 0 else 0, 
-                                   'positive_negative_proportion': positive_len / negative_len if negative_len != 0 else 0, 
-                                   'negative_positive_proportion': negative_len / positive_len if positive_len != 0 else 0}
+                                   'review_length': total_len, 'positive_review_proportion': positive_len / total_len if total_len != 0 else 0, 
+                                   'negative_review_proportion': negative_len / total_len if total_len != 0 else 0, 
+                                   'positive_negative_proportion': positive_len / negative_len if negative_len != 0 else positive_len, 
+                                   'negative_positive_proportion': negative_len / positive_len if positive_len != 0 else negative_len,
+                                   'negative_score': review_sentiment_scores['neg'], 'positive_score': review_sentiment_scores['pos'], 
+                                   'neutral_score': review_sentiment_scores['neu'], 'compound_score': review_sentiment_scores['compound'], 
+                                   'review_score': review_score}
+        
