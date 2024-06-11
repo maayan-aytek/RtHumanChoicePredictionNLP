@@ -1,5 +1,5 @@
 import numpy
-
+import csv
 import torch
 from torch.utils.data import Dataset, IterableDataset
 import numpy as np
@@ -160,6 +160,7 @@ class OfflineDataSet(Dataset):
 
 class OnlineSimulationDataSet(Dataset):
     def __init__(self, config):
+        print("Created!")
         self.config = config
         simulation_th = SIMULATION_TH
         max_active = SIMULATION_MAX_ACTIVE_USERS
@@ -178,7 +179,10 @@ class OnlineSimulationDataSet(Dataset):
         self.rt_generator = ReactionTimeGenerator(method=rt_method,
                                                   rt_model_file_name=rt_model_file_name,
                                                   rt_sampling_distribution=rt_sampling_distribution)
-
+        self.csv_file = f"rt_data/simulated_rt_{round(np.random.uniform(0, 100), 2)}.csv"
+        with open(self.csv_file, mode='w', newline='') as file:
+            writer = csv.writer(file)
+            writer.writerow(["strategy", "rt"])
         self.n_users = int(n_users / self.bots_per_user * 6)
         max_active = int(max_active / self.bots_per_user * 6)
 
@@ -408,18 +412,19 @@ class OnlineSimulationDataSet(Dataset):
                            "last_last_didWin_False": last_last_didWin_False,
                            "last_last_didWin_True": last_last_didWin_True,
                            "user_points": user_points, "bot_points": bot_points, "weight": weight, "is_sample": True}
-                    
-                    copy_row = {"user_id": user_id, "gameId": game_id, "roundNum": round_number, "strategy_id": bot,
-                                "reviewId": review_id, "last_reaction_time": last_reaction_time,
-                                "last_didWin_True": last_didWin_True, "last_didGo_True": last_didGo_True,
-                                "user_points": user_points, "bot_points": bot_points, "user_strategy_name": user_strategy_name}
-                    # copy_row = row.copy()
+                
+                    copy_row = row.copy()
+                    copy_row['user_strategy_name'] = user_strategy_name
                     copy_row['total_rounds_so_far'] = total_rounds_so_far
                     copy_row['rounds_so_far'] = round_number - 1
                     copy_row['current_game_mistakes_amount'] = current_game_mistakes
                     copy_row['total_games_mistakes_amount'] = total_games_mistakes
                     reaction_time = self.rt_generator.generate_rt(copy_row)
-
+                    if self.csv_file == f"rt_data/simulated_rt_41.7.csv" or self.csv_file == f"rt_data/simulated_rt_39.98.csv" or self.csv_file == f"rt_data/simulated_rt_93.01.csv":
+                        print("h")
+                    with open(self.csv_file, mode='a', newline='') as file:
+                        writer = csv.writer(file)
+                        writer.writerow([user_strategy_name, reaction_time])
                     row['reaction_time'] = reaction_time
                     last_reaction_time = reaction_time
                     # if self.advanced_reaction_time:

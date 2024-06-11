@@ -20,12 +20,16 @@ sweep_config = {
     "parameters": {
         # "ENV_HPT_mode": {"values": [False]},
         # "architecture": {"values": ["LSTM"]},
-        "seed": {"values": list(range(1, 6))},
-        # "rt_method": {"values": ['model']},
+        "ENV_HPT_mode": {"values": [True]},
+        "seed": {"values": list(range(1, 4))},
+        "rt_method": {"values": ['model']},
+        "rt_model_min_samples_leaf": {"values": [20, 50, 100]},
+        "rt_model_class_weight": {"values": ['balanced', 'balanced_subsample']},
+        "rt_model_top_features": {"values": ['all', '20']},
         # "rt_model_file_name": {"values": ["updated_large_model_with_strategies_7.pkl", "rf_basic_classification_model_1.pkl"]}
         # "rt_method": {"values": ['baseline']}
-        "rt_method": {"values": ['random']},
-        "rt_sampling_distribution": {"values": ["normal", "uniform"]}
+        # "rt_method": {"values": ['random']},
+        # "rt_sampling_distribution": {"values": ["normal", "uniform"]}
 
 
         # "online_simulation_factor": {"values": [0, 4]},

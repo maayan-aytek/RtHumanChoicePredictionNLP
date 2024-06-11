@@ -65,8 +65,12 @@ parser.add_argument('--personas_balanced', type=str2bool, default=True, help='Pe
 parser.add_argument('--personas_group_number', type=int, default=-1, help='Personas group number')
 
 # Reaction time 
-parser.add_argument('--rt_method', type=str, default="random", help='Reaction time method')
+parser.add_argument('--rt_method', type=str, default="heuristic", help='Reaction time method')
+parser.add_argument('--rt_model_min_samples_leaf', type=int, default=20, help='Reaction time model min_samples_leaf')
+parser.add_argument('--rt_model_class_weight', type=str, default='balanced_subsample', help='Reaction time model class_weight')
+parser.add_argument('--rt_model_top_features', type=str, default='20', help='Reaction time model top_features')
 parser.add_argument('--rt_model_file_name', type=str, default=None, help='Reaction time trained model file name')
+
 parser.add_argument('--rt_sampling_distribution', type=str, default='uniform', help='Reaction time random sampling distribution')
 
 

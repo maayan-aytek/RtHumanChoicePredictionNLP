@@ -5,6 +5,7 @@ import pickle
 import json
 import nltk
 import os
+import re
 from nltk.sentiment import SentimentIntensityAnalyzer
 
 DATA_GAME_REVIEWS_PATH = "data/game_reviews"
@@ -122,8 +123,10 @@ for hotel_id in range(1, N_HOTELS + 1):
         positive_len = len(positive_review)
         negative_len = len(negative_review)
         total_len = len(positive_review) + len(negative_review)
+        review_count = len(re.sub(r'[^\w\s]', '', review).split())
         REVIEWS_DICT[review_id] = {'positive_len': positive_len, 'negative_len': negative_len, 
-                                   'review_length': total_len, 'positive_review_proportion': positive_len / total_len if total_len != 0 else 0, 
+                                   'review_length': total_len, 'word_count': review_count, 
+                                     'positive_review_proportion': positive_len / total_len if total_len != 0 else 0, 
                                    'negative_review_proportion': negative_len / total_len if total_len != 0 else 0, 
                                    'positive_negative_proportion': positive_len / negative_len if negative_len != 0 else positive_len, 
                                    'negative_positive_proportion': negative_len / positive_len if positive_len != 0 else negative_len,
