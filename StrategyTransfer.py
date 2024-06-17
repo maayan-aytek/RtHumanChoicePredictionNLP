@@ -72,6 +72,9 @@ parser.add_argument('--rt_model_top_features', type=str, default='20', help='Rea
 parser.add_argument('--rt_model_file_name', type=str, default=None, help='Reaction time trained model file name')
 
 parser.add_argument('--rt_sampling_distribution', type=str, default='uniform', help='Reaction time random sampling distribution')
+parser.add_argument('--rt_neutral_sampling', type=str, default='normal', help='Reaction time neutral_sampling')
+parser.add_argument('--rt_user_noise_std', type=int, default=200, help='Reaction time user_noise_std')
+parser.add_argument('--rt_frustration_std_method', type=str, default='+', help='Reaction time frustration_std_method')
 
 
 args = parser.parse_args()

@@ -5,4 +5,5 @@ predictions/
 
 # Ignore all CSV files
 *.csv
+*.pkl
 *.out

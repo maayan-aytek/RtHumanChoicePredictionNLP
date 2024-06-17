@@ -160,7 +160,6 @@ class OfflineDataSet(Dataset):
 
 class OnlineSimulationDataSet(Dataset):
     def __init__(self, config):
-        print("Created!")
         self.config = config
         simulation_th = SIMULATION_TH
         max_active = SIMULATION_MAX_ACTIVE_USERS
@@ -176,9 +175,14 @@ class OnlineSimulationDataSet(Dataset):
         rt_method = config['rt_method']
         rt_model_file_name = config['rt_model_file_name']
         rt_sampling_distribution = config['rt_sampling_distribution']
+        rt_neutral_sampling = config['rt_neutral_sampling']
+        rt_frustration_std_method = config['rt_frustration_std_method']
+        self.rt_user_noise_std = config['rt_user_noise_std']
         self.rt_generator = ReactionTimeGenerator(method=rt_method,
                                                   rt_model_file_name=rt_model_file_name,
-                                                  rt_sampling_distribution=rt_sampling_distribution)
+                                                  rt_sampling_distribution=rt_sampling_distribution, 
+                                                  rt_neutral_sampling=rt_neutral_sampling, 
+                                                  rt_frustration_std_method=rt_frustration_std_method)
         self.csv_file = f"rt_data/simulated_rt_{round(np.random.uniform(0, 100), 2)}.csv"
         with open(self.csv_file, mode='w', newline='') as file:
             writer = csv.writer(file)
@@ -230,9 +234,10 @@ class OnlineSimulationDataSet(Dataset):
         self.add_to_user_id = DATA_CLEAN_ACTION_PATH_X_NUMBER_OF_USERS + DATA_CLEAN_ACTION_PATH_Y_NUMBER_OF_USERS
 
     class SimulatedUser:
-        def __init__(self, user_improve, basic_nature, favorite_topic_method, **args):
+        def __init__(self, user_improve, basic_nature, favorite_topic_method, rt_noise_std, **args):
             history_window = np.random.negative_binomial(2, 1 / 2) + np.random.randint(0, 2)
             quality_threshold = np.random.normal(8, 0.5)
+            self.rt_noise = abs(np.random.normal(1000, rt_noise_std))
             good_topics = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 13, 19, 28, 42]
             good_topics = [str(t) for t in good_topics]
             bad_topics = [11, 20, 21, 22, 23, 24, 25, 26, 27, 36, 40]
@@ -346,8 +351,9 @@ class OnlineSimulationDataSet(Dataset):
         user_id = self.next_user
         assert user_id < self.n_users
         args = {"favorite_review": self.get_review()}
-        user = self.SimulatedUser(user_improve=self.user_improve, basic_nature=self.basic_nature,
+        user = self.SimulatedUser(user_improve=self.user_improve, basic_nature=self.basic_nature, rt_noise_std=self.rt_user_noise_std,
                                   favorite_topic_method="review", **args)
+        user_rt_noise = user.rt_noise
         bots = self.sample_bots()
         game_id = 0
         total_rounds_so_far = 0
@@ -419,16 +425,12 @@ class OnlineSimulationDataSet(Dataset):
                     copy_row['rounds_so_far'] = round_number - 1
                     copy_row['current_game_mistakes_amount'] = current_game_mistakes
                     copy_row['total_games_mistakes_amount'] = total_games_mistakes
-                    reaction_time = self.rt_generator.generate_rt(copy_row)
-                    if self.csv_file == f"rt_data/simulated_rt_41.7.csv" or self.csv_file == f"rt_data/simulated_rt_39.98.csv" or self.csv_file == f"rt_data/simulated_rt_93.01.csv":
-                        print("h")
+                    reaction_time = self.rt_generator.generate_rt(copy_row, user_rt_noise)
                     with open(self.csv_file, mode='a', newline='') as file:
                         writer = csv.writer(file)
                         writer.writerow([user_strategy_name, reaction_time])
                     row['reaction_time'] = reaction_time
                     last_reaction_time = reaction_time
-                    # if self.advanced_reaction_time:
-                    #     last_reaction_time = self.get_reaction_time(row)
 
                     user_points += round_result
                     bot_points += user_action
