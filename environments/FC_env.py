@@ -2,6 +2,7 @@ from environments import environment
 import torch
 import torch.nn as nn
 from consts import *
+from utils.represent_reaction_time import ReactionTimeRep
 
 class FullyConnectedNN(nn.Module):
     def __init__(self, input_dim, hidden_dim, output_dim):
@@ -31,7 +32,8 @@ class FullyConnectedNN(nn.Module):
 
 class FC_env(environment.Environment):
     def init_model_arc(self, config):
-        input_dim = config["REVIEW_DIM"] + STRATEGY_DIM  # depends on the size of your input
+        rt_rep = ReactionTimeRep(config=config)
+        input_dim = config["REVIEW_DIM"] + rt_rep.strategy_dim  # depends on the size of your input
         hidden_dim = 128  # can be any number
         output_dim = 2  # depends on the size of your output
         self.model = FullyConnectedNN(input_dim, hidden_dim, output_dim)

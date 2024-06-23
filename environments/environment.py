@@ -9,6 +9,7 @@ import torch.optim as optim
 from itertools import chain
 import wandb
 from utils import *
+from utils.represent_reaction_time import ReactionTimeRep
 import pickle
 from utils import personas
 import reaction_time_model
@@ -29,6 +30,7 @@ class Environment:
         self.currentGame = None
         self.config = config
         force_train = config["force_train"]
+        self.rt_rep = ReactionTimeRep(config=config)
         if not force_train:
             try:
                 self.load()
@@ -168,7 +170,7 @@ class Environment:
 
                     batch_size, _ = batch["hotels_scores"].shape
                     review_vector = batch["review_vector"].reshape(batch_size, DATA_ROUNDS_PER_GAME, -1)
-                    env_input = [batch[feature].unsqueeze(-1) for feature in STRATEGIC_FEATURES_ORDER]
+                    env_input = [batch[feature].unsqueeze(-1) for feature in self.rt_rep.strategic_features_order]
                     env_input += [review_vector]
                     env_input = torch.cat(env_input, dim=2).double().to(device)
                     model_vectors = {"x": env_input}

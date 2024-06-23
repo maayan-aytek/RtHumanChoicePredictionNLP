@@ -1,5 +1,5 @@
 import torch
-
+from utils.represent_reaction_time import ReactionTimeRep
 from consts import *
 import pandas as pd
 import numpy as np
@@ -101,7 +101,7 @@ class StrategicSituation:
                 "user_not_earned_more": not self.user_points > self.bot_points}
 
         if USING_REACTION_TIME:
-            data.update({feature: 0 for feature in reaction_time_columns_names})
+            data.update({feature: 0 for feature in reaction_time_columns_names}) # never called
 
         return np.array([data[f] for f in STRATEGIC_FEATURES_ORDER])
 

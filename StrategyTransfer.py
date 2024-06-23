@@ -4,6 +4,7 @@ from consts import *
 from utils.functions import *
 import wandb
 from utils import personas
+from utils.represent_reaction_time import ReactionTimeRep
 import argparse
 
 parser = argparse.ArgumentParser(description='Hyperparameter tuning with wandb.')
@@ -64,17 +65,27 @@ parser.add_argument('--OFFLINE_SIM_DATA_PATH', type=str, default="data/LLM_games
 parser.add_argument('--personas_balanced', type=str2bool, default=True, help='Personas balanced flag')
 parser.add_argument('--personas_group_number', type=int, default=-1, help='Personas group number')
 
-# Reaction time 
+## Reaction time 
 parser.add_argument('--rt_method', type=str, default="heuristic", help='Reaction time method')
+
+# model 
 parser.add_argument('--rt_model_min_samples_leaf', type=int, default=20, help='Reaction time model min_samples_leaf')
 parser.add_argument('--rt_model_class_weight', type=str, default='balanced_subsample', help='Reaction time model class_weight')
 parser.add_argument('--rt_model_top_features', type=str, default='20', help='Reaction time model top_features')
 parser.add_argument('--rt_model_file_name', type=str, default=None, help='Reaction time trained model file name')
 
+# random 
 parser.add_argument('--rt_sampling_distribution', type=str, default='uniform', help='Reaction time random sampling distribution')
-parser.add_argument('--rt_neutral_sampling', type=str, default='normal', help='Reaction time neutral_sampling')
-parser.add_argument('--rt_user_noise_std', type=int, default=200, help='Reaction time user_noise_std')
+
+# heuristic
+parser.add_argument('--rt_neutral_sampling', type=str, default='800', help='Reaction time neutral_sampling')
+parser.add_argument('--rt_user_noise_std', type=int, default=500, help='Reaction time user_noise_std')
 parser.add_argument('--rt_frustration_std_method', type=str, default='+', help='Reaction time frustration_std_method')
+parser.add_argument('--rt_baseline_std', type=int, default=0, help='Reaction time baseline std')
+parser.add_argument('--rt_w_word_count', type=int, default=150, help='Reaction time w_word_count')
+parser.add_argument('--rt_bins_option_num', type=int, default=0, help='Reaction time bins_option_num')
+parser.add_argument('--rt_bins_columns_rep', type=str, default="one-hot", help='Reaction time bins_columns_rep')
+
 
 
 args = parser.parse_args()
@@ -105,7 +116,9 @@ if "LLM_USERS_PER_PERSONA" in config.keys():
 if "online_simulation_factor" in config.keys():
     config["online_simulation_size"] = (config["offline_simulation_size"] + config["human_train_size"]) * config["online_simulation_factor"]
 
-config["input_dim"] = config['REVIEW_DIM'] + STRATEGY_DIM
+
+rt_rep = ReactionTimeRep(config=config)
+config["input_dim"] = config['REVIEW_DIM'] + rt_rep.strategy_dim
 config["wandb_run_id"] = wandb.run.id
 
 set_global_seed(config["seed"])

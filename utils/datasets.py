@@ -14,11 +14,31 @@ from tqdm import trange
 import pandas as pd
 from consts import *
 from utils import personas
+from utils.represent_reaction_time import ReactionTimeRep
 from utils.generate_reaction_time import ReactionTimeGenerator
+
+
+def bin_to_lower_values(array, bins):
+    # Extract lower and upper bounds from bins
+    lower_bounds = np.array([b[0] for b in bins])
+    upper_bounds = np.array([b[1] for b in bins])
+
+    # Create an array to store the upper values
+    lower_values = np.full_like(array, np.nan, dtype=np.float64)
+
+    # Compare array values with bin bounds and assign upper bin values
+    for i in range(len(bins)):
+        mask = (array >= lower_bounds[i]) & (array < upper_bounds[i])
+        lower_values[mask] = lower_bounds[i]
+
+    return lower_values
 
 
 class OfflineDataSet(Dataset):
     def __init__(self, user_groups, config, weight_type, strategies=None, users=None):
+        self.rt_rep = ReactionTimeRep(config)
+        self.reaction_time_columns_names = self.rt_rep.reaction_time_columns_names
+        self.reaction_time_bins = self.rt_rep.reaction_time_bins
         self.config = config
         reviews_path = DATA_GAME_REVIEWS_PATH
         x_path = DATA_CLEAN_ACTION_PATH_X
@@ -151,8 +171,12 @@ class OfflineDataSet(Dataset):
                   "weight": game["weight"].to_numpy(),
                   "action_id": game["index"].to_numpy()}
 
-        for column_name, (lower, upper) in zip(reaction_time_columns_names, reaction_time_bins):
-            sample[column_name] = (lower <= last_reaction_time) & (last_reaction_time < upper)
+        
+        for column_name, (lower, upper) in zip(self.reaction_time_columns_names, self.reaction_time_bins):
+            if "category" in column_name:
+                sample[column_name] = bin_to_lower_values(last_reaction_time, self.reaction_time_bins) 
+            else:
+                sample[column_name] = (lower <= last_reaction_time) & (last_reaction_time < upper)
 
         sample["review_vector"] = torch.stack(sample["review_vector"])
         return sample
@@ -160,6 +184,9 @@ class OfflineDataSet(Dataset):
 
 class OnlineSimulationDataSet(Dataset):
     def __init__(self, config):
+        self.rt_rep = ReactionTimeRep(config)
+        self.reaction_time_columns_names = self.rt_rep.reaction_time_columns_names
+        self.reaction_time_bins = self.rt_rep.reaction_time_bins
         self.config = config
         simulation_th = SIMULATION_TH
         max_active = SIMULATION_MAX_ACTIVE_USERS
@@ -178,15 +205,19 @@ class OnlineSimulationDataSet(Dataset):
         rt_neutral_sampling = config['rt_neutral_sampling']
         rt_frustration_std_method = config['rt_frustration_std_method']
         self.rt_user_noise_std = config['rt_user_noise_std']
+        self.rt_baseline_std = config['rt_baseline_std']
+        self.rt_w_word_count = config['rt_w_word_count']
         self.rt_generator = ReactionTimeGenerator(method=rt_method,
                                                   rt_model_file_name=rt_model_file_name,
                                                   rt_sampling_distribution=rt_sampling_distribution, 
                                                   rt_neutral_sampling=rt_neutral_sampling, 
-                                                  rt_frustration_std_method=rt_frustration_std_method)
-        self.csv_file = f"rt_data/simulated_rt_{round(np.random.uniform(0, 100), 2)}.csv"
-        with open(self.csv_file, mode='w', newline='') as file:
-            writer = csv.writer(file)
-            writer.writerow(["strategy", "rt"])
+                                                  rt_frustration_std_method=rt_frustration_std_method,
+                                                  rt_baseline_std=self.rt_baseline_std, 
+                                                  rt_w_word_count = self.rt_w_word_count)
+        # self.csv_file = f"rt_data/simulated_rt_{round(np.random.uniform(0, 100), 2)}.csv"
+        # with open(self.csv_file, mode='w', newline='') as file:
+        #     writer = csv.writer(file)
+        #     writer.writerow(["strategy", "rt"])
         self.n_users = int(n_users / self.bots_per_user * 6)
         max_active = int(max_active / self.bots_per_user * 6)
 
@@ -426,9 +457,9 @@ class OnlineSimulationDataSet(Dataset):
                     copy_row['current_game_mistakes_amount'] = current_game_mistakes
                     copy_row['total_games_mistakes_amount'] = total_games_mistakes
                     reaction_time = self.rt_generator.generate_rt(copy_row, user_rt_noise)
-                    with open(self.csv_file, mode='a', newline='') as file:
-                        writer = csv.writer(file)
-                        writer.writerow([user_strategy_name, reaction_time])
+                    # with open(self.csv_file, mode='a', newline='') as file:
+                    #     writer = csv.writer(file)
+                    #     writer.writerow([user_strategy_name, reaction_time])
                     row['reaction_time'] = reaction_time
                     last_reaction_time = reaction_time
 
@@ -518,8 +549,11 @@ class OnlineSimulationDataSet(Dataset):
                   "weight": weight,
                   "action_id": action_ids}
 
-        for column_name, (lower, upper) in zip(reaction_time_columns_names, reaction_time_bins):
-            sample[column_name] = (lower <= last_reaction_time) & (last_reaction_time < upper)
+        for column_name, (lower, upper) in zip(self.reaction_time_columns_names, self.reaction_time_bins):
+            if "category" in column_name:
+                sample[column_name] = bin_to_lower_values(last_reaction_time, self.reaction_time_bins) 
+            else:
+                sample[column_name] = (lower <= last_reaction_time) & (last_reaction_time < upper)
 
         sample["review_vector"] = torch.stack(sample["review_vector"])
 
