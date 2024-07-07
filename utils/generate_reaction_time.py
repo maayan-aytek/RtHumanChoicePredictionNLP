@@ -1,15 +1,34 @@
-from consts import PROBA2GO_DICT, REVIEWS_DICT
-import warnings
-import pickle
 import os
-import re
+import pickle
+import warnings
 import numpy as np
 from reaction_time_model import lost_cause
+from consts import PROBA2GO_DICT, REVIEWS_DICT
 warnings.filterwarnings("ignore", message="X does not have valid feature names")
 
 
 class ReactionTimeGenerator:
-    def __init__(self, method, rt_model_file_name = None, rt_model_instance=None, **kwargs):
+    """
+    Generates reaction times using different methods: baseline, random, model-based, or heuristic.
+    Attributes:
+    ----------
+    kwargs : dict
+        Additional parameters for generator functions.
+    trained_model : model or None
+        Loaded model for 'model' method.
+    model_features : list of str or None
+        Feature names required by the trained model.
+    method : str
+        Method used for reaction time generation.
+    bot_thresholds : dict
+        Thresholds for bot categories.
+    strategies_rt_baselines : dict
+        Baseline reaction times for strategies.
+    generator_func : function
+        Function for generating reaction times based on the method.
+    """
+    def __init__(self, method, rt_model_file_name = None, **kwargs):
+        """Initializes the generator with the specified method and model file."""
         self.kwargs = kwargs
         self.trained_model = None
         self.model_features = None
@@ -23,6 +42,7 @@ class ReactionTimeGenerator:
         self._set_generator_function()
 
     def _set_generator_function(self):
+        """Sets the appropriate function for generating reaction times."""
         if self.method == 'baseline':
             self.generator_func = self._baseline
         elif self.method == 'random':
@@ -35,6 +55,7 @@ class ReactionTimeGenerator:
             raise ValueError(f'Unexpected method: {self.method}')
 
     def extract_features(self, row):
+        """Extracts features from the data row."""
         user_strategy_name = row['user_strategy_name']
         row['played_oracle'] = 0
         row['played_random'] = 0
@@ -74,9 +95,11 @@ class ReactionTimeGenerator:
 
 
     def _baseline(self, row, user_noise, **kwargs):
+        """Generates a baseline reaction time (returns -1)."""
         return -1
     
     def _random(self, row, user_noise, **kwargs):
+        """Generates a random reaction time using specified distribution."""
         sampling_distribution = kwargs.get('rt_sampling_distribution', 'normal')
         if sampling_distribution == 'normal':
             result = np.random.normal(5000, 10000)
@@ -90,12 +113,14 @@ class ReactionTimeGenerator:
 
 
     def _model(self, row, user_noise, **kwargs):
+        """Generates a reaction time using a trained model."""
         if self.trained_model is None:
             raise ValueError("Model is not loaded")
         X_row = [row[feature] for feature in self.model_features]
         return self.trained_model.predict([X_row])[0]
 
     def _heuristic(self, row, user_noise, **kwargs):
+        """Generates a reaction time using heuristic calculations."""
         neutral_sampling = kwargs.get('rt_neutral_sampling', 'normal')
         frustration_std_method = kwargs.get('rt_frustration_std_method', '+')
         rt_baseline_std = kwargs.get('rt_baseline_std', 0)
@@ -141,6 +166,7 @@ class ReactionTimeGenerator:
         return rt
 
     def generate_rt(self, row, user_noise):
+        """Generates a reaction time based on the selected method."""
         if self.method != 'random' or self.method != 'baseline':
             row = self.extract_features(row)
         return self.generator_func(row, user_noise, **self.kwargs)

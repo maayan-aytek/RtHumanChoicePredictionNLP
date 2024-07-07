@@ -22,14 +22,14 @@ def bin_to_lower_values(array, bins):
     # Extract lower and upper bounds from bins
     lower_bounds = np.array([b[0] for b in bins])
     upper_bounds = np.array([b[1] for b in bins])
-
+    max_lower_bound = max(lower_bounds)
     # Create an array to store the upper values
-    lower_values = np.full_like(array, np.nan, dtype=np.float64)
+    lower_values = np.full_like(array, -1, dtype=np.float64)
 
     # Compare array values with bin bounds and assign upper bin values
     for i in range(len(bins)):
         mask = (array >= lower_bounds[i]) & (array < upper_bounds[i])
-        lower_values[mask] = lower_bounds[i]
+        lower_values[mask] = lower_bounds[i] / max_lower_bound
 
     return lower_values
 
@@ -170,12 +170,12 @@ class OfflineDataSet(Dataset):
                   "is_sample": game["is_sample"].to_numpy(),
                   "weight": game["weight"].to_numpy(),
                   "action_id": game["index"].to_numpy()}
-
         
-        for column_name, (lower, upper) in zip(self.reaction_time_columns_names, self.reaction_time_bins):
+        for i, column_name in enumerate(self.reaction_time_columns_names):
             if "category" in column_name:
                 sample[column_name] = bin_to_lower_values(last_reaction_time, self.reaction_time_bins) 
             else:
+                lower, upper = self.reaction_time_bins[i]
                 sample[column_name] = (lower <= last_reaction_time) & (last_reaction_time < upper)
 
         sample["review_vector"] = torch.stack(sample["review_vector"])
@@ -549,12 +549,13 @@ class OnlineSimulationDataSet(Dataset):
                   "weight": weight,
                   "action_id": action_ids}
 
-        for column_name, (lower, upper) in zip(self.reaction_time_columns_names, self.reaction_time_bins):
+        for i, column_name in enumerate(self.reaction_time_columns_names):
             if "category" in column_name:
                 sample[column_name] = bin_to_lower_values(last_reaction_time, self.reaction_time_bins) 
             else:
+                lower, upper = self.reaction_time_bins[i]
                 sample[column_name] = (lower <= last_reaction_time) & (last_reaction_time < upper)
-
+       
         sample["review_vector"] = torch.stack(sample["review_vector"])
 
         return sample

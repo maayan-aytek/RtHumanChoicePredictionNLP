@@ -19,7 +19,7 @@ sweep_config = {
     },
     "parameters": {
         "ENV_HPT_mode": {"values": [False]},
-        "seed": {"values": list(range(1, 4))},
+        "seed": {"values": list(range(1, 6))},
         "rt_method": {"values": ['model']},
         "rt_model_min_samples_leaf": {"values": [20, 50, 100]},
         "rt_model_class_weight": {"values": ['balanced', 'balanced_subsample']},

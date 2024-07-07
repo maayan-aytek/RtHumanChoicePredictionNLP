@@ -1,7 +1,6 @@
 import torch
 import pandas as pd
 import numpy as np
-import pickle
 import json
 import nltk
 import os
@@ -38,12 +37,12 @@ STRATEGIC_FEATURES_ORDER = ['roundNum', 'user_points', 'bot_points',
                             'last_last_didGo_True', 'last_last_didGo_False',
                             'last_last_didWin_True', 'last_last_didWin_False',
                             "user_earned_more", "user_not_earned_more"]
-if USING_REACTION_TIME:
-    STRATEGIC_FEATURES_ORDER += reaction_time_columns_names
+# if USING_REACTION_TIME:
+#     STRATEGIC_FEATURES_ORDER += reaction_time_columns_names
 
 N_HOTELS = 1068
 
-STRATEGY_DIM = len(STRATEGIC_FEATURES_ORDER)
+# STRATEGY_DIM = len(STRATEGIC_FEATURES_ORDER)
 
 DEEPRL_LEARNING_RATE = 4e-4
 
@@ -94,12 +93,6 @@ bot_thresholds_X = {0: 10, 1: 7, 2: 9, 3: 8, 4: 8, 5: 9}
 bot_thresholds_Y = {0: 10, 1: 9, 2: 9, 3: 9, 4: 9, 5: 9}
 
 AGENT_LEARNING_TH = 8
-
-
-# with open('models/updated_large_model_with_strategies_7.pkl', 'rb') as file:
-#     RT_MODEL = pickle.load(file)
-    
-# RT_MODEL_FEATURES = RT_MODEL.feature_names_in_
 
 with open("data/baseline_proba2go.txt", 'r') as file:
     PROBA2GO_DICT = json.load(file)
