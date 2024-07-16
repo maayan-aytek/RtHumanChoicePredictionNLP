@@ -7,6 +7,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import sklearn
 from sklearn import metrics
+import glob
 
 class wandb_results:
     def __init__(self, project_id, wandb_username="eilamshapira"): 
@@ -19,12 +20,21 @@ class wandb_results:
             self.reset_api()
 
         print(f"Download {sweep_id=} data...")
-        runs = self.api.sweep(f"{self.wandb_username}/{self.project_id}/{sweep_id}").runs
-        n_runs = len(runs)
-        if dir_path:
-            path = f"{dir_path}/sweeps_csvs/{sweep_id}_{n_runs}.csv"
-        else:
-            path = f"sweeps_csvs/{sweep_id}_{n_runs}.csv"
+        try:
+            runs = self.api.sweep(f"{self.wandb_username}/{self.project_id}/{sweep_id}").runs
+            n_runs = len(runs)
+            if dir_path:
+                path = f"{dir_path}/sweeps_csvs/{sweep_id}_{n_runs}.csv"
+            else:
+                path = f"sweeps_csvs/{sweep_id}_{n_runs}.csv"
+        except:
+            if dir_path:
+                file_pattern = f"{dir_path}/sweeps_csvs/{sweep_id}_*.csv"
+            else:
+                file_pattern = f"sweeps_csvs/{sweep_id}_*.csv"
+            file_list = glob.glob(file_pattern)
+            path = file_list[0]
+        
         if read_csv_if_exist and os.path.exists(path):
             return pd.read_csv(path, index_col=0)
         summary_list, config_list, name_list = [], [], []

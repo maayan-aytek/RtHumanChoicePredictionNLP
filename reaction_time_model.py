@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd 
 from sklearn.ensemble import RandomForestClassifier
 from Simulation.dm_strategies import BOT_ACTION, REVIEWS
-from consts import DATA_CLEAN_ACTION_PATH_X, DATA_CLEAN_ACTION_PATH_Y, reaction_time_bins, PROBA2GO_DICT, REVIEWS_DICT
+from consts import DATA_CLEAN_ACTION_PATH_X, PROBA2GO_DICT, REVIEWS_DICT
 
 hotel_dfs = dict()
 with open("data/baseline_proba2go.txt", 'r') as file:
@@ -107,7 +107,7 @@ def lost_cause(row, strategy_threshold_dict):
         return 0
 
 
-def pre_process(actions_df, bot_thresholds):
+def pre_process(actions_df, bot_thresholds, reaction_time_bins):
     bin_edges = [-1] + [b[0] for b in reaction_time_bins] + [reaction_time_bins[-1][1]]
     actions_df['reaction_time_bins'] = pd.cut(actions_df['reaction_time'], bins=bin_edges, include_lowest=True)
     actions_df['last_reaction_time_bins'] = pd.cut(actions_df['last_reaction_time'], bins=bin_edges, include_lowest=True)
@@ -142,13 +142,13 @@ def pre_process(actions_df, bot_thresholds):
     return actions_df
 
 
-def run(seed, min_samples_leaf, class_weight, n_estimators=20, top_features='all'):
+def run(seed, reaction_time_bins, min_samples_leaf, class_weight, n_estimators=20, top_features='all'):
     model_name = f'min_samples_leaf_{min_samples_leaf}_class_weight_{class_weight}_top_features_{top_features}_seed_{seed}.pkl'
     if os.path.exists(f'sweep_models/{model_name}'):
         return model_name
     X_df = pd.read_csv(DATA_CLEAN_ACTION_PATH_X)
     bot_thresholds_X = {3: 10, 0: 7, 2: 9, 5: 9, 59: 8, 19: 9}
-    train_df = pre_process(X_df, bot_thresholds_X)
+    train_df = pre_process(X_df, bot_thresholds_X, reaction_time_bins)
 
     all_features = ['gameId', 'roundNum', 'user_points', 'bot_points', 'last_didGo_True', 'last_last_didGo_True', 'last_didWin_True', 'last_last_didWin_True', 'review_prob', 'review_score',
                 'review_length', 'positive_review_proportion','negative_review_proportion','positive_negative_proportion','negative_positive_proportion', 'negative_score',

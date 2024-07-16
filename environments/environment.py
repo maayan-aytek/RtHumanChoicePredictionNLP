@@ -130,9 +130,10 @@ class Environment:
         metrics = Metrics("ENV")
         if self.config['rt_method'] == "model":
             rt_model_name = reaction_time_model.run(seed = self.config['seed'],
-                                    min_samples_leaf = self.config['rt_model_min_samples_leaf'],
-                                    class_weight = self.config['rt_model_class_weight'], 
-                                    top_features= self.config['rt_model_top_features'])
+                                                    reaction_time_bins=self.rt_rep.reaction_time_bins,
+                                                    min_samples_leaf = self.config['rt_model_min_samples_leaf'],
+                                                    class_weight = self.config['rt_model_class_weight'], 
+                                                    top_features= self.config['rt_model_top_features'])
             self.config.update({'rt_model_file_name': rt_model_name}, allow_val_change=True)
         for epoch in range(self.config["total_epochs"]):
             result_saver = ResultSaver(config=self.config, epoch=epoch)
