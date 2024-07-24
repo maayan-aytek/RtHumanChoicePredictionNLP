@@ -125,6 +125,7 @@ class ReactionTimeGenerator:
         frustration_std_method = kwargs.get('rt_frustration_std_method', '+')
         rt_baseline_std = kwargs.get('rt_baseline_std', 0)
         w_word_count = kwargs.get('rt_w_word_count', 150)
+        reading_rate = w_word_count/60
 
         user_strategy = row['user_strategy_name']
         word_count = row['word_count']
@@ -152,14 +153,14 @@ class ReactionTimeGenerator:
         w_lost_cause = np.random.uniform(0.2, 0.5)
         if user_strategy == 'random':
             w_strategy = np.random.uniform(0, 0.5)
-            rt = baseline + (1 - lost_cause)*(word_count*w_word_count*w_strategy + neutral_score*w_neutral*w_strategy) - lost_cause*w_lost_cause*baseline
+            rt = baseline + (1 - lost_cause)*((word_count/reading_rate)*1000*w_strategy + neutral_score*w_neutral*w_strategy) - lost_cause*w_lost_cause*baseline
         elif user_strategy == "correct - oracle":
             w_strategy = np.random.uniform(0.5, 1)
-            rt = baseline + word_count*w_word_count*w_strategy - lost_cause*w_lost_cause*baseline - w_frustration - user_noise
+            rt = baseline + (word_count/reading_rate)*1000*w_strategy - lost_cause*w_lost_cause*baseline - w_frustration - user_noise
         else: # LLM/Trustful
             w_strategy = np.random.uniform(0.5, 1)
             w_mistakes = abs(np.random.normal(1000, 200))
-            rt = baseline + word_count*w_word_count*w_strategy - lost_cause*w_lost_cause*baseline + \
+            rt = baseline + (word_count/reading_rate)*1000*w_strategy - lost_cause*w_lost_cause*baseline + \
             lost_cause*w_lost_cause*neutral_score*w_neutral*w_strategy + (1-lost_cause)*neutral_score*w_neutral*w_strategy - \
             (1-lost_cause)*current_game_mistakes_percentage*w_mistakes + (1-lost_cause)*(last_didWin_True+last_last_didWin_True)*100 - w_frustration - user_noise
         rt = max(rt, 300)

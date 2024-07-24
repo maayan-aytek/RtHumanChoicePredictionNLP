@@ -82,7 +82,7 @@ parser.add_argument('--rt_neutral_sampling', type=str, default='800', help='Reac
 parser.add_argument('--rt_user_noise_std', type=int, default=500, help='Reaction time user_noise_std')
 parser.add_argument('--rt_frustration_std_method', type=str, default='+', help='Reaction time frustration_std_method')
 parser.add_argument('--rt_baseline_std', type=int, default=0, help='Reaction time baseline std')
-parser.add_argument('--rt_w_word_count', type=int, default=150, help='Reaction time w_word_count')
+parser.add_argument('--rt_w_word_count', type=int, default=350, help='Reaction time w_word_count')
 parser.add_argument('--rt_bins_option_num', type=int, default=0, help='Reaction time bins_option_num')
 parser.add_argument('--rt_bins_columns_rep', type=str, default="one-hot", help='Reaction time bins_columns_rep')
 
