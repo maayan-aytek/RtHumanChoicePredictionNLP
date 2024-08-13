@@ -12,16 +12,27 @@ with open("data/baseline_proba2go.txt", 'r') as file:
     probs_dict = json.load(file)
 
 def add_review_prob(row):
+    # Adds the probability of a review based on its ID from the preloaded dictionary.
     review_id = row['reviewId']
     return probs_dict[str(review_id)]
 
 def get_review_scores(row):
+    # Retrieves the review scores based on the review ID from the preloaded dictionary.
     review_id = row['reviewId']
     review_scores_dict = REVIEWS_DICT[review_id]
     return review_scores_dict
 
 
 def add_mistakes_columns(df):
+    """
+    Adds columns to the DataFrame for tracking cumulative mistakes across games and rounds.
+    
+    Parameters:
+    df (pd.DataFrame): The DataFrame containing game data.
+    
+    Returns:
+    pd.DataFrame: The DataFrame with additional columns for mistake tracking.
+    """
     # Calculate the cumulative sum of mistakes, then shift within each group so the calculation will be correct to the start of the round
     df['mistakes_cumulative'] = df.groupby(['user_id', 'gameId'])['didWin'].transform(lambda x: (~x).cumsum())  
     df['current_game_mistakes_amount'] = df.groupby(['user_id', 'gameId'])['mistakes_cumulative'].shift(fill_value=0)  
@@ -41,7 +52,7 @@ def add_mistakes_columns(df):
     df.drop(['mistakes_cumulative', 'total_mistakes_cumulative', 'rounds_so_far', 'total_rounds_so_far'], axis=1, inplace=True)
     return df
 
-
+# -------------------------------------- Strategy Functions ---------------------------------------------------------------------------
 def history_and_review_quality(history_window, quality_threshold, information):      
     if len(information["previous_rounds"]) == 0 \
             or history_window == 0 \
@@ -95,8 +106,20 @@ def calculate_trustful_and_llm(row, user_properties):
     
     return pd.Series([trustful_decision, llm_decision])
 
+# -------------------------------------------------------------------------------------------------------------------------------
+
 
 def lost_cause(row, strategy_threshold_dict):
+    """
+    Determines if a game is a lost cause based on strategy thresholds and mistakes made.
+    
+    Parameters:
+    row (pd.Series): A row of game data.
+    strategy_threshold_dict (dict): Dictionary mapping strategy IDs to threshold values.
+    
+    Returns:
+    int: 1 if the game is considered a lost cause, otherwise 0.
+    """
     if row['strategy_id'] not in strategy_threshold_dict:
         threshold = 9
     else:
@@ -108,6 +131,17 @@ def lost_cause(row, strategy_threshold_dict):
 
 
 def pre_process(actions_df, bot_thresholds, reaction_time_bins):
+    """
+    Preprocesses the action DataFrame by binning reaction times, adding mistake columns, and calculating decisions.
+
+    Parameters:
+        actions_df (pd.DataFrame): The input DataFrame containing user actions and game data.
+        bot_thresholds (dict): A dictionary containing bot thresholds for each strategy.
+        reaction_time_bins (list of tuples): A list of tuples defining the edges for reaction time bins.
+
+    Returns:
+        pd.DataFrame: The preprocessed DataFrame ready for model training.
+    """
     bin_edges = [-1] + [b[0] for b in reaction_time_bins] + [reaction_time_bins[-1][1]]
     actions_df['reaction_time_bins'] = pd.cut(actions_df['reaction_time'], bins=bin_edges, include_lowest=True)
     actions_df['last_reaction_time_bins'] = pd.cut(actions_df['last_reaction_time'], bins=bin_edges, include_lowest=True)
@@ -143,6 +177,29 @@ def pre_process(actions_df, bot_thresholds, reaction_time_bins):
 
 
 def run(seed, reaction_time_bins, min_samples_leaf, class_weight, n_estimators=20, top_features='all'):
+    """
+    Trains and saves a RandomForest model using the specified parameters.
+
+    Parameters:
+    -----------
+    seed : int
+        Random seed for reproducibility.
+    reaction_time_bins : list of tuples
+        Bins for categorizing reaction times.
+    min_samples_leaf : int
+        Minimum samples required at a leaf node.
+    class_weight : str or dict
+        Class weights ('balanced' or custom).
+    n_estimators : int, optional
+        Number of trees in the forest (default=20).
+    top_features : int or str, optional
+        Number of top features to use, or 'all' (default='all').
+
+    Returns:
+    --------
+    str
+        The name of the saved model file.
+    """
     model_name = f'min_samples_leaf_{min_samples_leaf}_class_weight_{class_weight}_top_features_{top_features}_seed_{seed}.pkl'
     if os.path.exists(f'sweep_models/{model_name}'):
         return model_name
