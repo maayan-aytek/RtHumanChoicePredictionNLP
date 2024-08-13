@@ -1,5 +1,5 @@
 # cloning your code from github:
-git clone https://github.com/maayan-aytek/HumanChoicePredictionNLP.git
+git clone https://github.com/maayan-aytek/RtHumanChoicePredictionNLP.git
 
 # Your main sweep:
 python final_sweep_maayan-aytek.py
